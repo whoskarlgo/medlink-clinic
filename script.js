@@ -262,7 +262,7 @@ async function loadDynamicContent() {
                 
                 if (contactAddress) contactAddress.textContent = content.contact.address || '123 Healthcare St., Marikina, Philippines';
                 if (contactPhone) contactPhone.textContent = content.contact.phone || '+63 905 517 7314';
-                if (contactEmail) contactEmail.textContent = content.contact.email || 'info@medlinkclinic.com';
+                if (contactEmail) contactEmail.textContent = content.contact.email || 'info.medlinkclinic@gmail.com';
             }
         }
         
@@ -583,14 +583,6 @@ async function handleAppointmentSubmission(e) {
             return;
         }
 
-        // REMOVED: Real-time shift check - now only check for the specific appointment time
-        // const isOnShift = await isDoctorOnShift(formData.doctor);
-        // if (!isOnShift) {
-        //     const doctorName = await getDoctorName(formData.doctor);
-        //     showNotification(`Dr. ${doctorName.split(' - ')[0]} is currently off-duty. Please choose another doctor or try again during their shift hours.`, 'error');
-        //     return;
-        // }
-
         // Check doctor availability for the SPECIFIC appointment time
         const availability = await checkDoctorAvailability(formData.doctor, formData.date, formData.time);
         if (!availability.available) {
@@ -604,7 +596,15 @@ async function handleAppointmentSubmission(e) {
             return;
         }
 
-        await submitAppointment(formData);
+        const appointmentResult = await submitAppointment(formData);
+        
+        // Send email notification if email is provided
+        if (formData.email && isValidEmail(formData.email)) {
+            await emailService.triggerAppointmentEmail(formData);
+            showNotification('Appointment booked successfully! Confirmation email will be sent shortly.', 'success');
+        } else {
+            showNotification('Appointment booked successfully!', 'success');
+        }
 
     } catch (error) {
         console.error('Error booking appointment:', error);
